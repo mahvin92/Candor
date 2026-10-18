@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Candor by ChordexBio: an Intelligent Cancer Mutation Analyst. Profile tumor mutations against TCGA reference cohorts and get a clear, honest explanation.">
+<title>Candor — Intelligent Cancer Mutation Analyst</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%232457c5'/%3E%3Ccircle cx='11.2' cy='12.6' r='1.9' fill='white'/%3E%3Ccircle cx='20.8' cy='12.6' r='1.9' fill='white'/%3E%3Cpath d='M9.2 18.4c1.6 3.6 4.1 5.2 6.8 5.2s5.2-1.6 6.8-5.2' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f4f6fb;--panel:#fff;--ink:#14202e;--muted:#566476;--line:#e0e6ef;--brand:#2457c5;--brand-ink:#fff;--soft:#eaf0fc;
+ --ok:#17703f;--ok-bg:#e2f4ea;--warn:#8a5a00;--warn-bg:#fff2d0;--bad:#a8211a;--bad-bg:#fde7e5;--info:#34475f;--info-bg:#e8edf5;
+ --shadow:0 1px 2px rgba(16,24,40,.06),0 6px 20px rgba(16,24,40,.07);--r:14px}
+@media (prefers-color-scheme:dark){:root{--bg:#0d131b;--panel:#151d28;--ink:#e8eef6;--muted:#9aa8ba;--line:#263243;--brand:#7aa5ff;--brand-ink:#0b1220;--soft:#1a2a47;
+ --ok:#63d99a;--ok-bg:#12301f;--warn:#f2c35b;--warn-bg:#352b10;--bad:#ff8f86;--bad-bg:#3b1714;--info:#b2bfd2;--info-bg:#1e2836;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35)}}
+*{box-sizing:border-box}
+html{scroll-padding-top:70px}
+body{margin:0;font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:6px}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 20px;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.brand svg{width:30px;height:30px;flex:none}
+.brand small{font-weight:500;color:var(--muted);font-size:12px;display:block;margin-top:-2px}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:999px;font-size:12px;background:var(--info-bg);color:var(--info);white-space:nowrap}
+.pill i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.ready{background:var(--ok-bg);color:var(--ok)} .pill.warming{background:var(--warn-bg);color:var(--warn)} .pill.down{background:var(--bad-bg);color:var(--bad)}
+.pill.warming i{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 12px;font-size:13px}
+.ghost:hover{background:var(--soft)}
+main{max-width:940px;margin:0 auto;padding:22px 16px 230px}
+.hero{text-align:center;padding:26px 6px 8px}
+.hero h1{font-size:clamp(26px,4.4vw,38px);line-height:1.15;margin:0 0 10px;letter-spacing:-.02em}
+.hero p{margin:0 auto;max-width:640px;color:var(--muted);font-size:16px}
+.steps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0 6px;padding:0;list-style:none;color:var(--muted);font-size:13px}
+.steps li{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.steps b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--soft);color:var(--brand);font-size:12px}
+.examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:22px 0 8px}
+.ex{all:unset;box-sizing:border-box;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);transition:transform .12s,border-color .12s;display:block}
+.ex:hover{transform:translateY(-2px);border-color:var(--brand)} .ex:focus-visible{outline:3px solid var(--brand)}
+.ex h3{margin:0 0 6px;font-size:15px} .ex p{margin:0;color:var(--muted);font-size:13px;text-align:left}
+.ex span{display:inline-block;margin-top:10px;color:var(--brand);font-size:13px;font-weight:600}
+.gate{max-width:440px;margin:18px auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);text-align:left}
+.gate input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--bg);color:var(--ink);margin:8px 0}
+.gate .err{color:var(--bad);font-size:13px;min-height:18px}
+.btn{background:var(--brand);color:var(--brand-ink);border:0;border-radius:10px;padding:9px 16px;font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.turn{margin:22px 0;display:flex;flex-direction:column;gap:12px}
+.bubble{border-radius:var(--r);padding:11px 15px;max-width:100%}
+.bubble.user{align-self:flex-end;background:var(--brand);color:var(--brand-ink);max-width:86%;white-space:pre-wrap;word-break:break-word}
+.bubble.user details{margin-top:6px} .bubble.user summary{cursor:pointer;opacity:.95}
+.bubble.user pre{margin:6px 0 0;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;opacity:.92}
+.chip{display:inline-block;background:rgba(255,255,255,.2);border-radius:8px;padding:2px 9px;font-size:13px;font-weight:600}
+.bubble.ai{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);overflow-x:auto}
+.bubble.ai.error{border-color:var(--bad);background:var(--bad-bg)}
+.bubble.ai p{margin:6px 0}.bubble.ai h4{margin:12px 0 4px}.bubble.ai ul,.bubble.ai ol{margin:6px 0;padding-left:22px}
+.bubble.ai table{border-collapse:collapse;margin:8px 0;font-size:13px}.bubble.ai th,.bubble.ai td{border:1px solid var(--line);padding:5px 9px;text-align:left}
+.bubble.ai code{background:var(--info-bg);padding:1px 5px;border-radius:5px}
+.who{font-size:12px;color:var(--muted);margin:0 4px 2px;font-weight:600}
+.progress{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.progress ol{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 10px;padding:0;list-style:none;font-size:14px}
+.progress li{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.progress li .dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.progress li.done{color:var(--ok)} .progress li.done .dot{background:var(--ok)}
+.progress li.active{color:var(--ink);font-weight:600} .progress li.active .dot{background:var(--brand);animation:pulse 1s infinite}
+.progress small{font-weight:400;color:var(--muted)}
+.bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:99px;transition:width .4s}
+.bar.indet i{width:35%;animation:slide 1.4s infinite ease-in-out}
+@keyframes slide{0%{margin-left:-35%}100%{margin-left:100%}}
+.progress .meta{margin-top:8px;font-size:12px;color:var(--muted)}
+.result{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.result>header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.result h3{margin:0;font-size:17px;flex:1}
+.acts{display:flex;gap:8px}
+.note{border-radius:10px;padding:8px 12px;font-size:13px;margin:8px 0}
+.note.warn{background:var(--warn-bg);color:var(--warn)} .note.info{background:var(--info-bg);color:var(--info)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.tabs button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 12px;font-size:13px}
+.tabs button[aria-selected=true]{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.pmeta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:4px 0 12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:12px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg)}
+.tile header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tile h4{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tile .top1{display:flex;align-items:baseline;gap:10px;margin-top:8px}
+.tile .code{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.tile .score{font-size:17px;font-weight:700;color:var(--brand)}
+.tile .weak .code,.tile .weak .score{color:var(--muted)}
+.tile .sub{font-size:13px;color:var(--muted);min-height:20px}
+.tile .hint{font-size:12px;color:var(--muted);margin:2px 0 10px}
+.dist{display:grid;grid-template-columns:minmax(0,1.2fr) 2fr auto;gap:6px 8px;align-items:center;font-size:12px}
+.dist .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dist .t{height:7px;border-radius:99px;background:var(--line);overflow:hidden}.dist .t i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.dist .v{font-variant-numeric:tabular-nums;color:var(--muted)}
+.tile .shared{margin-top:10px;font-size:12px;color:var(--muted)}
+.tile .shared b{display:inline-block;background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:1px 7px;margin:0 3px 0 2px}
+.tile.na{opacity:.6}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.badge.bad{background:var(--bad-bg);color:var(--bad)}.badge.info{background:var(--info-bg);color:var(--info)}
+details.ev{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details.ev summary{cursor:pointer;font-weight:600;font-size:14px}
+.tw{overflow-x:auto;margin:8px 0}
+.tw table{border-collapse:collapse;font-size:12.5px;min-width:100%}
+.tw th,.tw td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;white-space:nowrap}
+.tw th{color:var(--muted);font-weight:600}
+.disc{margin-top:12px;font-size:12px;color:var(--muted)}
+.fups{display:flex;gap:8px;flex-wrap:wrap}
+.fups button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:6px 13px;font-size:13px}
+.fups button:hover{border-color:var(--brand);color:var(--brand)}
+.composer{position:fixed;left:0;right:0;bottom:0;z-index:15;padding:30px 16px 14px;background:linear-gradient(to bottom,transparent,var(--bg) 38%)}
+.cbox{max-width:940px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:8px 10px;display:flex;gap:8px;align-items:flex-end}
+.cbox:focus-within{border-color:var(--brand)}
+.cbox textarea{flex:1;border:0;outline:0;resize:none;font:inherit;background:transparent;color:var(--ink);max-height:200px;min-height:44px;padding:10px 6px}
+.icon{border:0;background:transparent;color:var(--muted);border-radius:10px;width:40px;height:40px;font-size:20px}
+.icon:hover{background:var(--soft);color:var(--brand)}
+.cbox .btn{height:40px}
+.hint2{max-width:940px;margin:6px auto 0;font-size:12px;color:var(--muted);text-align:center}
+.drop{outline:3px dashed var(--brand);outline-offset:-6px}
+dialog{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);color:var(--ink);max-width:620px;width:calc(100% - 32px);padding:22px;box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(8,12,18,.55)}
+dialog h2{margin:0 0 8px;font-size:20px} dialog h3{margin:16px 0 4px;font-size:14px}
+dialog p,dialog li{color:var(--muted);font-size:14px;margin:4px 0}
+.x{float:right}
+.herologo{width:68px;height:68px;margin:0 auto 12px;display:block}
+.stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:16px 0 4px;padding:0;list-style:none}
+.stats li{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 14px;text-align:center;min-width:120px}
+.stats b{display:block;font-size:20px;letter-spacing:-.01em;color:var(--brand)} .stats span{font-size:12px;color:var(--muted)}
+.took{font-size:12px;color:var(--muted)}
+dialog{max-height:88vh;overflow:auto}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:560px){.top{padding:8px 12px}.brand small{display:none}.pill{font-size:11px}main{padding-top:12px}}
+@media print{
+ :root{--bg:#fff;--panel:#fff;--ink:#111;--muted:#444;--line:#ccc;--soft:#eee;--brand:#1c3f8f}
+ body.printing .top,body.printing .composer,body.printing .hero,body.printing .turn:not(.print-target),body.printing .acts,body.printing .fups{display:none!important}
+ body.printing main{padding:0}.result,.tile{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#2457c5"/><circle cx="11.2" cy="12.6" r="1.9" fill="#fff"/><circle cx="20.8" cy="12.6" r="1.9" fill="#fff"/><path d="M9.2 18.4c1.6 3.6 4.1 5.2 6.8 5.2s5.2-1.6 6.8-5.2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <div>Candor<small>Intelligent Cancer Mutation Analyst</small></div>
+  </div>
+  <span class="sp"></span>
+  <span id="engine" class="pill warming" role="status"><i></i><span>Checking Candor engine…</span></span>
+  <button class="ghost" id="about-btn">How it works</button>
+</header>
+
+<main id="feed" aria-live="polite">
+  <section class="hero" id="hero">
+    <svg class="herologo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#2457c5"/><circle cx="11.2" cy="12.6" r="1.9" fill="#fff"/><circle cx="20.8" cy="12.6" r="1.9" fill="#fff"/><path d="M9.2 18.4c1.6 3.6 4.1 5.2 6.8 5.2s5.2-1.6 6.8-5.2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <h1>From complex mutation data to decision-ready insight — in one conversation</h1>
+    <p><strong>Candor</strong> is an AI-powered cancer mutation intelligence framework by ChordexBio. Paste a tumor's somatic mutations: Candor, embedded in Gemini as agentic AI, profiles them against TCGA reference cohorts and explains what the evidence does — and does not — support.</p>
+    <ul class="stats" aria-label="Candor training data"><li><b>2.5M+</b><span>mutations</span></li><li><b>11,160</b><span>patients (TCGA)</span></li><li><b>33</b><span>cancer types</span></li></ul>
+    <ul class="steps"><li><b>1</b> Paste or upload mutations</li><li><b>2</b> Candor profiles them</li><li><b>3</b> Gemini explains the result</li></ul>
+    <div class="gate" id="gate" hidden>
+      <strong>Access code</strong>
+      <input id="code" type="password" autocomplete="off" placeholder="Enter the access code from the submission" aria-label="Access code">
+      <div class="err" id="gateErr" role="alert"></div>
+      <button class="btn" id="enter">Continue</button>
+    </div>
+    <div class="examples" id="examples"></div>
+  </section>
+</main>
+
+<div class="composer">
+  <div class="cbox" id="cbox">
+    <button class="icon" id="attach" title="Upload a .csv / .tsv / .txt mutation table" aria-label="Upload a mutation table">＋</button>
+    <input type="file" id="file" accept=".csv,.tsv,.txt,text/plain,text/csv" hidden>
+    <textarea id="input" rows="1" aria-label="Message" placeholder="Paste a mutation table (Gene, Chromosome, Position, Ref>Alt, PatientID — hg38) or ask a question…"></textarea>
+    <button class="btn" id="send" disabled>Send</button>
+  </div>
+  <div class="hint2">Enter to send · Shift+Enter for a new line · Research prototype — not a diagnostic device. Please don't enter real patient data.</div>
+</div>
+
+<dialog id="about">
+  <button class="ghost x" id="about-close" aria-label="Close">Close</button>
+  <h2>About Candor</h2>
+  <p><strong>Candor</strong> is an AI-powered cancer mutation intelligence framework developed by <strong>ChordexBio</strong> to help bridge the gap between complex biological data and informed decision-making.</p>
+  <p>It was trained on over 2.5 million mutations from The Cancer Genome Atlas (TCGA): 11,160 patients across 33 cancer types. Embedded in Gemini as agentic AI, Candor gives convenient, seamless access to knowledge for interpreting and analyzing large sets of cancer-associated genomic alterations, including for institutions and organizations with limited compute and data-analytics capacity.</p>
+  <p>By integrating specialized computational analysis with agentic AI, Candor aims to reduce the time needed to access, interpret and synthesize mutational and clinical knowledge. Its collaborative design lets users and AI systems explore genomic profiles together, retrieve relevant insights and translate complex information into decision-support outputs, with applications across medicine, biotechnology, biology, healthcare and the life sciences.</p>
+  <h3>How this prototype works</h3>
+  <p><b>1 · Gemini understands the request.</b> Gemini on Vertex AI reads your message, recognizes a pasted mutation table and decides when to call Candor. Your table is passed on exactly as pasted: the language model never retypes your data.</p>
+  <p><b>2 · Candor profiles the mutations.</b> The Candor engine, a proprietary model running as a private service on Google Cloud, compares the mutation set with TCGA reference cohorts and returns calls for cancer type, disease stage and patient sex, with scores, evidence markers and closest reference profiles.</p>
+  <p><b>3 · Gemini explains, and stays honest.</b> Results are shown as exact model output. Gemini explains them, flags weak or ambiguous calls, and asks for genomic coordinates instead of guessing them.</p>
+  <h3>Built for the AI Builder Cup 2026</h3>
+  <p>Track: <em>Future of Work &amp; Enterprise Productivity</em>. Candor targets how individuals and organizations access specialized knowledge, collaborate, make decisions and complete everyday analytical work, by turning a task that normally needs bioinformatics expertise into a conversation.</p>
+  <h3>Input format</h3>
+  <p><code>Gene,Chromosome,Position,Ref&gt;Alt,PatientID</code> with hg38 coordinates, e.g. <code>TP53,chr17,7675088-7675088,C&gt;T,P001</code>. Several patients in one table are pooled into a single profile unless you ask for per-patient results.</p>
+  <h3>Safety</h3>
+  <p>Research prototype only. Matches against public reference data are not a diagnosis and must be reviewed by a qualified clinician. Do not enter real patient data.</p>
+  <p style="margin-top:14px">Built with Gemini on Vertex AI · Cloud Run · Secret Manager.</p>
+</dialog>
+
+<script>
+// <pure>
+const CANCER={ACC:"Adrenocortical carcinoma",BLCA:"Bladder urothelial carcinoma",BRCA:"Breast invasive carcinoma",CESC:"Cervical squamous cell carcinoma / endocervical adenocarcinoma",CHOL:"Cholangiocarcinoma",COAD:"Colon adenocarcinoma",DLBC:"Diffuse large B-cell lymphoma",ESCA:"Esophageal carcinoma",GBM:"Glioblastoma multiforme",HNSC:"Head and neck squamous cell carcinoma",KICH:"Kidney chromophobe",KIRC:"Kidney renal clear cell carcinoma",KIRP:"Kidney renal papillary cell carcinoma",LAML:"Acute myeloid leukemia",LGG:"Brain lower grade glioma",LIHC:"Liver hepatocellular carcinoma",LUAD:"Lung adenocarcinoma",LUSC:"Lung squamous cell carcinoma",MESO:"Mesothelioma",OV:"Ovarian serous cystadenocarcinoma",PAAD:"Pancreatic adenocarcinoma",PCPG:"Pheochromocytoma and paraganglioma",PRAD:"Prostate adenocarcinoma",READ:"Rectum adenocarcinoma",SARC:"Sarcoma",SKCM:"Skin cutaneous melanoma",STAD:"Stomach adenocarcinoma",TGCT:"Testicular germ cell tumors",THCA:"Thyroid carcinoma",THYM:"Thymoma",UCEC:"Uterine corpus endometrial carcinoma",UCS:"Uterine carcinosarcoma",UVM:"Uveal melanoma"};
+const STAGE={I:"Stage I",II:"Stage II",III:"Stage III",IV:"Stage IV",UNK:"Not recorded in reference data"};
+const SEX={F:"Female",M:"Male",U:"Not recorded in reference data"};
+const TITLES={CancerType:"Cancer type",Stage:"Disease stage",Sex:"Patient sex"};
+const ORDER=["CancerType","Stage","Sex"];
+const CLASSES={
+ distinct:{label:"Distinct",tone:"ok",icon:"✓",tip:"One label clearly leads.",short:"One label clearly leads"},
+ shared:{label:"Shared",tone:"warn",icon:"≈",tip:"The leading label is shared with other labels.",short:"Leading label is shared"},
+ indeterminate:{label:"Indeterminate",tone:"info",icon:"?",tip:"The evidence is not coherent enough for a unique call.",short:"Not a confident call"},
+ outlier:{label:"Outlier",tone:"bad",icon:"!",tip:"The mutation set does not resemble the reference cohort.",short:"Does not resemble the reference set"}};
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function pct(x,d){d=d==null?1:d;return(typeof x==="number"&&isFinite(x))?(x*100).toFixed(d)+"%":"—";}
+function num(x,d){return(typeof x==="number"&&isFinite(x))?x.toFixed(d):"—";}
+function fullName(t,c){const m=t==="CancerType"?CANCER:t==="Stage"?STAGE:t==="Sex"?SEX:null;return m&&m[c]?m[c]:"";}
+function badge(cls){const c=CLASSES[cls]||{label:cls||"n/a",tone:"info",icon:"•",tip:""};return `<span class="badge ${c.tone}" title="${esc(c.tip)}"><span aria-hidden="true">${c.icon}</span> ${esc(c.label)}</span>`;}
+function inl(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>");}
+function md(text){
+ const out=[];let list=null,table=[];
+ const fl=()=>{if(list){out.push("<"+list.t+">"+list.i.map(x=>"<li>"+x+"</li>").join("")+"</"+list.t+">");list=null;}};
+ const ft=()=>{if(!table.length)return;
+  const rows=table.filter(r=>!/^\s*\|?[\s:\-|]+\|?\s*$/.test(r)).map(r=>r.trim().replace(/^\||\|$/g,"").split("|").map(c=>inl(c.trim())));
+  if(rows.length)out.push("<table><tr>"+rows[0].map(c=>"<th>"+c+"</th>").join("")+"</tr>"+rows.slice(1).map(r=>"<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>").join("")+"</table>");
+  table=[];};
+ for(const raw of String(text||"").split("\n")){
+  if(/^\s*\|.*\|\s*$/.test(raw)){fl();table.push(raw);continue;}
+  ft();let m;
+  if((m=raw.match(/^\s*[*\-•]\s+(.*)/))){if(!list||list.t!=="ul"){fl();list={t:"ul",i:[]};}list.i.push(inl(m[1]));continue;}
+  if((m=raw.match(/^\s*\d+[.)]\s+(.*)/))){if(!list||list.t!=="ol"){fl();list={t:"ol",i:[]};}list.i.push(inl(m[1]));continue;}
+  fl();
+  if((m=raw.match(/^#{1,4}\s+(.*)/))){out.push("<h4>"+inl(m[1])+"</h4>");continue;}
+  if(raw.trim())out.push("<p>"+inl(raw)+"</p>");
+ }
+ fl();ft();return out.join("");
+}
+function renderTile(name,t){
+ const cls=t.classification,strong=cls==="distinct",c=CLASSES[cls];
+ const nm=fullName(name,t.top1);
+ const bars=(t.distribution||[]).slice(0,4).map(d=>`<span class="l" title="${esc(d.label)}">${esc(d.label)}</span><span class="t"><i style="width:${Math.max(2,Math.min(100,(d.score||0)*100)).toFixed(1)}%"></i></span><span class="v">${pct(d.score)}</span>`).join("");
+ const margin=typeof t.margin==="number"?` · margin ${(t.margin*100).toFixed(1)} pts`:"";
+ const shared=(t.shared_with&&t.shared_with.length)?`<div class="shared">Shared with:${t.shared_with.map(s=>`<b>${esc(s)}</b>`).join("")}</div>`:"";
+ const sup=(t.n_supporting_markers!=null)?` · ${esc(t.n_supporting_markers)} supporting marker${t.n_supporting_markers===1?"":"s"}`:"";
+ return `<section class="tile"><header><h4>${esc(TITLES[name]||name)}</h4>${badge(cls)}</header>
+ <div class="top1 ${strong?"":"weak"}"><span class="code">${esc(t.top1)}</span><span class="score">${pct(t.top1_score)}</span></div>
+ <div class="sub">${esc(nm)}</div>
+ <div class="hint">${esc(c?c.short:"")}${margin}${sup}</div>
+ <div class="dist">${bars}</div>${shared}</section>`;
+}
+function labelsText(l){if(!l)return"—";if(typeof l==="string")return esc(l);return esc(Object.values(l).filter(v=>v!=null&&v!=="").join(" · "))||"—";}
+function matchedCount(m){return Array.isArray(m)?m.length:(typeof m==="number"?m:"—");}
+function renderEvidence(p){
+ const mk=(p.top_markers||[]).map(m=>`<tr><td>${esc(m.marker)}</td><td>${num(m.specificity,3)}</td><td>${num(m.match_score,2)}</td><td>${badge(m.classification)}</td></tr>`).join("");
+ const rf=(p.closest_reference_profiles||[]).map(r=>`<tr><td>${esc(r.patient_id)}</td><td>${num(r.score,2)}</td><td>${typeof r.coverage==="number"?pct(r.coverage,0):"—"}</td><td>${esc(matchedCount(r.matched_markers))}</td><td>${labelsText(r.labels)}</td></tr>`).join("");
+ const notes=[p.interpretation,p.validation_note,p.ground_truth_note].filter(Boolean).map(n=>`<p>${esc(n)}</p>`).join("");
+ if(!mk&&!rf&&!notes)return"";
+ return `<details class="ev"><summary>Evidence behind this result</summary>
+ ${mk?`<div class="tw"><table><thead><tr><th>Marker</th><th>Specificity</th><th>Match</th><th>Class</th></tr></thead><tbody>${mk}</tbody></table></div>`:""}
+ ${rf?`<div class="tw"><table><thead><tr><th>Closest reference profile</th><th>Score</th><th>Coverage</th><th>Matched markers</th><th>Labels</th></tr></thead><tbody>${rf}</tbody></table></div>`:""}
+ ${notes?`<div class="note info">${notes}</div>`:""}</details>`;
+}
+function renderProfile(p,id,i,total){
+ const names=Object.keys(p.targets||{});
+ const order=ORDER.filter(n=>names.includes(n)).concat(names.filter(n=>!ORDER.includes(n)));
+ const tiles=order.map(n=>renderTile(n,p.targets[n])).join("")+
+  (p.targets_not_available||[]).map(n=>`<section class="tile na"><header><h4>${esc(TITLES[n]||n)}</h4></header><div class="sub" style="margin-top:12px">Not available from this model</div></section>`).join("");
+ const who=p.query_patient_id&&p.query_patient_id!=="COMBINED"&&p.query_patient_id!=="CASE"?`Patient ${esc(p.query_patient_id)}`:"Combined profile";
+ const outl=typeof p.outlier_fraction==="number"?` · outlier ${pct(p.outlier_fraction,0)}`:"";
+ return `<div data-pane="${esc(id)}:${i}" ${i>0?"hidden":""}><div class="pmeta"><strong>${who}</strong> ${badge(p.profile_classification)}<span>${esc(p.n_markers==null?"—":p.n_markers)} markers · ${esc(p.n_informative_markers==null?"—":p.n_informative_markers)} informative${outl}</span></div>
+ <div class="tiles">${tiles}</div>${renderEvidence(p)}</div>`;
+}
+function renderAnalysis(a,id){
+ const ps=a.profiles||[];
+ const took=typeof a.took_s==="number"?`<span class="took">Completed in ${Math.max(0,Math.floor(a.took_s))} s</span>`:"";
+ const tabs=ps.length>1?`<div class="tabs" role="tablist">${ps.map((p,i)=>`<button role="tab" data-tab="${esc(id)}:${i}" aria-selected="${i===0}">${esc(p.query_patient_id&&p.query_patient_id!=="COMBINED"?p.query_patient_id:"Combined")}</button>`).join("")}</div>`:"";
+ const na=a.not_analysed||{};
+ const skipped=[].concat((na.needs_genomic_coordinates||[]).map(x=>`${esc(x.input)} — needs hg38 genomic coordinates`),(na.errors||[]).map(x=>`${esc(x.input)} — ${esc(x.error)}`));
+ return `<article class="result" data-result="${esc(id)}"><header><h3>Mutation profile analysis</h3>${took}
+ <div class="acts"><button class="ghost" data-act="copy" data-id="${esc(id)}">Copy summary</button><button class="ghost" data-act="print" data-id="${esc(id)}">Print / save PDF</button></div></header>
+ ${a.warning?`<div class="note warn">${esc(a.warning)}</div>`:""}
+ ${skipped.length?`<div class="note info"><strong>Not analysed:</strong><br>${skipped.join("<br>")}</div>`:""}
+ ${tabs}${ps.map((p,i)=>renderProfile(p,id,i,ps.length)).join("")}
+ <div class="disc">Research prototype. Calls come from matching against public reference cohorts and are not a diagnosis; a qualified clinician must review them.</div></article>`;
+}
+function summaryText(a){
+ const lines=["Candor, Intelligent Cancer Mutation Analyst — mutation profile analysis (research prototype, not a diagnosis)"];
+ if(a.warning)lines.push("Note: "+a.warning);
+ (a.profiles||[]).forEach(p=>{
+  lines.push("",(p.query_patient_id&&p.query_patient_id!=="COMBINED"?"Patient "+p.query_patient_id:"Combined profile")+" — "+(p.profile_classification||"n/a")+", "+(p.n_markers==null?"?":p.n_markers)+" markers");
+  ORDER.concat(Object.keys(p.targets||{}).filter(n=>!ORDER.includes(n))).forEach(n=>{const t=(p.targets||{})[n];if(!t)return;
+   lines.push(" - "+(TITLES[n]||n)+": "+t.top1+" ("+pct(t.top1_score)+"), "+t.classification+(typeof t.margin==="number"?", margin "+(t.margin*100).toFixed(1)+" pts":""));});
+ });
+ return lines.join("\n");
+}
+function renderProgress(j,secs){
+ const order=["thinking","analysis","interpreting"],labels={thinking:"Understanding your request",analysis:"Running the Candor analysis",interpreting:"Writing the explanation"};
+ const step=Math.max(0,Math.floor(Number(j.step)||0)),total=Math.max(0,Math.floor(Number(j.total)||0)),s=Math.max(0,Math.floor(Number(secs)||0));
+ const cur=Math.max(0,order.indexOf(j.phase||"thinking"));
+ const steps=order.slice(0,cur+1).map((p,i)=>{const st=i<cur?"done":"active";
+  const extra=(p==="analysis"&&st==="active"&&total)?` <small>(step ${step} of ${total})</small>`:"";
+  return `<li class="${st}"><span class="dot"></span>${labels[p]}${extra}</li>`;}).join("");
+ const w=(order[cur]==="analysis"&&total)?Math.min(100,Math.round(100*step/total)):null;
+ const hint=s>60?" · the first analysis after idle time can take a couple of minutes":"";
+ return `<div class="progress" role="status"><ol>${steps}</ol>${w==null?'<div class="bar indet"><i></i></div>':`<div class="bar"><i style="width:${w}%"></i></div>`}<div class="meta">${s}s elapsed${hint}</div></div>`;
+}
+function userBubbleHtml(text){
+ const lines=String(text).split("\n");
+ const rows=lines.filter(l=>/^[^,\s]+\s*,\s*(chr)?[0-9XYM]+\s*,\s*\d/i.test(l));
+ if(rows.length<3)return esc(text);
+ const rest=lines.filter(l=>!rows.includes(l)).join("\n").trim();
+ return (rest?esc(rest)+"\n":"")+`<span class="chip">Mutation table · ${rows.length} rows</span><details><summary>Preview</summary><pre>${esc(rows.slice(0,8).join("\n"))}${rows.length>8?"\n…":""}</pre></details>`;
+}
+// </pure>
+
+const $=id=>document.getElementById(id);
+const feed=$("feed"),input=$("input"),sendBtn=$("send");
+let sid=null,busy=false,accessCode=new URLSearchParams(location.search).get("k")||"",turnN=0,gateRequired=false;
+const RESULTS={};
+if(location.search)history.replaceState(null,"",location.pathname);
+
+const TABLE=["CD79A,chr19,41879025-41879025,C>T,TCGA-CV-7568","ZMYM6,chr1,34987609-34987609,G>A,TCGA-CV-7568","PUM2,chr2,20263261-20263261,G>A,TCGA-CV-7568","PRSS36,chr16,31145941-31145941,G>A,TCGA-CV-7568","TTN,chr2,178552081-178552081,C>T,TCGA-CV-7568","RASGRP3,chr2,33543539-33543539,C>T,TCGA-CV-7568","TENT5D,chrX,80442894-80442894,G>A,TCGA-CV-7568","SERPINE1,chr7,101131942-101131942,C>T,TCGA-CV-7568","VEGFC,chr4,176687268-176687268,G>A,TCGA-CV-7568","BCAT1,chr12,24842124-24842124,C>T,TCGA-CV-7568","TTN,chr2,178741446-178741446,C>T,TCGA-CV-7568","VIPR2,chr7,159103799-159103799,G>A,TCGA-CV-7568","SEPTIN4,chr17,58543458-58543458,G>A,TCGA-CV-7568"].join("\n");
+const EXAMPLES=[
+ {t:"Multi-gene tumor profile",d:"13 somatic mutations from one public-cohort tumor. See the cancer type, stage and sex calls with their evidence.",x:"Analyze this molecular profile of cancer mutations. What can you tell me?\n"+TABLE},
+ {t:"Common hotspot mutations",d:"TP53, KRAS and PIK3CA together. Shows how the model abstains when the evidence is weak.",x:"Tumor profile: TP53 chr17:7675088 C>T, KRAS chr12:25245350 C>T, PIK3CA chr3:179218303 G>A. What does this suggest?"},
+ {t:"Protein-level input",d:"See how the assistant handles input it can't use safely — it asks instead of guessing.",x:"The tumor has KRAS G12D and TP53 R175H. What cancer is this?"}];
+$("examples").innerHTML=EXAMPLES.map((e,i)=>`<button class="ex" data-ex="${i}"><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p><span>Try this example →</span></button>`).join("");
+
+function setBusy(on){busy=on;input.disabled=on;refreshSend();}
+function refreshSend(){sendBtn.disabled=busy||!input.value.trim();}
+function autosize(){input.style.height="auto";input.style.height=Math.min(input.scrollHeight,200)+"px";}
+input.addEventListener("input",()=>{autosize();refreshSend();});
+input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();submit();}});
+sendBtn.onclick=()=>submit();
+
+async function api(url,opts){
+ try{const r=await fetch(url,opts);let j={};try{j=await r.json();}catch(e){}return{ok:r.ok,status:r.status,j};}
+ catch(e){return{ok:false,status:0,j:{error:"Can't reach the service. Check your connection and try again."}};}
+}
+const post=(u,b)=>api(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+
+async function startSession(){
+ const r=await post("/api/start",{code:accessCode});
+ if(!r.ok){
+  if(r.status===401){gateRequired=true;$("gate").hidden=false;$("gateErr").textContent=accessCode?"That access code was not accepted.":"";}
+  return r.j.error||"Could not start a session.";
+ }
+ sid=r.j.session_id;$("gate").hidden=true;return null;
+}
+function addTurn(userText){
+ const hero=$("hero");if(hero)[...hero.children].forEach(c=>{if(c.id!=="gate")c.remove();});
+ const el=document.createElement("div");el.className="turn";
+ el.innerHTML=`<div class="bubble user">${userBubbleHtml(userText)}</div><div class="slot"></div>`;
+ feed.appendChild(el);el.scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+ return el;
+}
+async function submit(text){
+ text=(text!=null?text:input.value).trim();
+ if(busy||!text)return;
+ setBusy(true);
+ const turn=addTurn(text),slot=turn.querySelector(".slot");
+ input.value="";autosize();
+ slot.innerHTML=renderProgress({phase:"thinking"},0);
+ if(!sid){const err=await startSession();if(err){slot.innerHTML=`<div class="bubble ai error">${esc(err)}</div>`;setBusy(false);return;}}
+ const r=await post("/api/chat",{session_id:sid,message:text});
+ if(!r.ok){
+  if(r.status===404)sid=null;
+  slot.innerHTML=`<div class="bubble ai error">${esc(r.j.error||"Something went wrong.")}</div>`;setBusy(false);return;
+ }
+ const t0=Date.now(),job=r.j.job_id;
+ const timer=setInterval(async()=>{
+  const jr=await api("/api/job/"+job+"?session_id="+encodeURIComponent(sid));
+  if(!jr.ok&&jr.status!==0){clearInterval(timer);slot.innerHTML=`<div class="bubble ai error">${esc(jr.j.error||"Lost the connection to the job.")}</div>`;setBusy(false);return;}
+  const j=jr.j,secs=Math.floor((Date.now()-t0)/1000);
+  if(j.status==="running"||jr.status===0){slot.innerHTML=renderProgress(j,secs);return;}
+  clearInterval(timer);
+  let html="";
+  (j.analyses||[]).forEach(a=>{a.took_s=secs;const id="r"+(++turnN);RESULTS[id]=a;html+=renderAnalysis(a,id);});
+  html+=`<div><div class="who">Assistant</div><div class="bubble ai ${j.status==="error"?"error":""}">${md(j.reply||"")}</div></div>`;
+  if((j.analyses||[]).length&&j.status==="done")html+=`<div class="fups">${["Explain the stage and sex calls","Why is the confidence what it is?","What data would strengthen this result?"].map(q=>`<button data-fu="${esc(q)}">${esc(q)}</button>`).join("")}</div>`;
+  slot.innerHTML=html;turn.classList.add("done");
+  setBusy(false);input.focus();
+ },1000);
+}
+
+document.addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.ex!=null){submit(EXAMPLES[+b.dataset.ex].x);}
+ else if(b.dataset.fu){submit(b.dataset.fu);}
+ else if(b.dataset.tab){const[id]=b.dataset.tab.split(":");const res=b.closest(".result");
+  res.querySelectorAll("[data-tab]").forEach(t=>t.setAttribute("aria-selected",t===b?"true":"false"));
+  res.querySelectorAll("[data-pane]").forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);}
+ else if(b.dataset.act==="copy"){const txt=summaryText(RESULTS[b.dataset.id]);
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{b.textContent="Copied ✓";setTimeout(()=>b.textContent="Copy summary",1800);}).catch(()=>{window.prompt("Copy the summary:",txt);});}
+ else if(b.dataset.act==="print"){const turn=b.closest(".turn");document.body.classList.add("printing");turn.classList.add("print-target");
+  const done=()=>{document.body.classList.remove("printing");turn.classList.remove("print-target");window.removeEventListener("afterprint",done);};
+  window.addEventListener("afterprint",done);window.print();}
+});
+
+// file upload + drag & drop
+async function loadFile(f){
+ if(!f)return;if(f.size>1000000){alert("That file is larger than 1 MB.");return;}
+ const txt=(await f.text()).trim();input.value=(input.value.trim()?input.value.trim()+"\n":"Analyze this mutation table:\n")+txt;autosize();refreshSend();input.focus();
+}
+$("attach").onclick=()=>$("file").click();
+$("file").onchange=e=>{loadFile(e.target.files[0]);e.target.value="";};
+const cbox=$("cbox");
+["dragenter","dragover"].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();cbox.classList.add("drop");}));
+["dragleave","drop"].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();if(ev==="drop")loadFile(e.dataTransfer.files[0]);cbox.classList.remove("drop");}));
+
+// access gate
+$("enter").onclick=async()=>{accessCode=$("code").value.trim();const err=await startSession();if(err&&!gateRequired)$("gateErr").textContent=err;else if(!err)$("gateErr").textContent="";};
+$("code").addEventListener("keydown",e=>{if(e.key==="Enter")$("enter").click();});
+
+// engine status
+const ENG={ready:["ready","Candor engine ready"],warming:["warming","Candor engine warming up…"],down:["down","Candor engine unavailable"]};
+async function pollEngine(){
+ const r=await api("/api/config");
+ if(r.ok){const[c,t]=ENG[r.j.engine]||ENG.warming;const el=$("engine");el.className="pill "+c;el.lastElementChild.textContent=t;
+  if(r.j.access_code_required&&!accessCode&&!sid){$("gate").hidden=false;}}
+ setTimeout(pollEngine,r.ok&&r.j.engine==="ready"?30000:8000);
+}
+pollEngine();
+
+// about dialog
+const dlg=$("about");$("about-btn").onclick=()=>dlg.showModal();$("about-close").onclick=()=>dlg.close();
+dlg.addEventListener("click",e=>{if(e.target===dlg)dlg.close();});
+refreshSend();
+</script>
+</body>
+</html>

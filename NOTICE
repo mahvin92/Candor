@@ -1,0 +1,7 @@
+Candor (web application and Gemini agent)
+Copyright 2026 ChordexBio
+
+This product includes only the public web application, the Gemini agent code, a synthetic test engine, tests and
+documentation. The Candor analysis model, its weights, training and reference data, and the engine service that
+serves it are proprietary to ChordexBio, are NOT part of this repository and are NOT licensed under the Apache
+License. The names "Candor" and "ChordexBio" are not licensed for use as trademarks.
