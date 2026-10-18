@@ -1,4 +1,5 @@
-"""Public demo: chat UI + API in front of Gemini (Vertex AI). Contains no Candor code or weights."""
+"""Public demo: chat UI + API in front of Gemini (Vertex AI). Contains no Candor code or weights, which are proprietary."""
+
 import logging, os, threading, time
 
 import candor_tools as T
