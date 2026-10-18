@@ -213,7 +213,6 @@ The Candor model, its weights, its training and reference data, and the engine s
 The web app talks to the engine through a small authenticated HTTP API (see `_run_predict` in
 [app/candor_tools.py](app/candor_tools.py)); the synthetic engine in [mock_engine/](mock_engine/) implements the same contract.
 
-## License
+## Associated terms
 
-Code in this repository is released under the [Apache License 2.0](LICENSE); see [NOTICE](NOTICE) for what is excluded.
 Data derived from [TCGA](https://www.cancer.gov/ccg/research/genome-sequencing/tcga) is subject to its own terms of use.
