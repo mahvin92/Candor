@@ -14,7 +14,7 @@ regulatory clearance.
   reference data, not independent validation.
 * **No invented coordinates.** Protein-level input (for example `KRAS G12D`) is never converted to genomic coordinates;
   the user is asked for hg38 coordinates instead.
-* **Not yet validated.** Held-out accuracy, sensitivity and time saved have not been measured for this prototype.
+* **Not yet validated, clinically.** Held-out accuracy, sensitivity and time saved have not been measured for this prototype.
 * **Data terms.** TCGA-derived data is subject to its own terms of use.
 
 Before any clinical use, a privacy, audit and regulatory pathway would be required.
