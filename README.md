@@ -1,6 +1,6 @@
 # Candor: Intelligent Cancer Mutation Analyst
 
-**AI Builder Cup 2026 · Category: Future of Work & Enterprise Productivity · Team ChordexBio**
+**AI Builder Cup 2026 · Category: Future of Work & Enterprise Productivity · [Team ChordexBio](https://chordexbio.com/)**
 
 > Paste a tumor's mutation table. Ask in plain language. Get an evidence-backed, honestly labelled profile and a
 > plain-language explanation, all in one conversation.
@@ -9,11 +9,10 @@
 
 | For judges | Where |
 |---|---|
-| Hosted demo and access code | Provided in the AI Builder Cup submission form (not published in this repository) |
-| 3 to 4 minute demo video | Linked in the submission form |
+| Hosted demo link | https://candor-bztxwuefqq-as.a.run.app |
+| Access code | candor-79ec1a |
+| 3 to 4 minute demo video | https://drive.google.com/file/d/1xd8RTAImgM-k5PH154S1ayKLebOFCkdW/view?usp=drive_link |
 | Architecture in one picture | [docs/images/architecture.png](docs/images/architecture.png) |
-| Run it yourself, no private access needed | [Option B: synthetic test engine](#9-run-it) |
-| Judging criteria, mapped to files | [Section 13](#13-judging-criteria-map) |
 
 ---
 
