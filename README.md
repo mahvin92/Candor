@@ -121,7 +121,8 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## 9. Run it
 
 ### Option A: hosted demo
-Use the link and access code from the submission form.
+https://candor-bztxwuefqq-as.a.run.app
+Access code: andor-79ec1a
 
 ### Option B: locally, with the synthetic test engine
 This runs the real web app and the real Gemini agent against a **synthetic** engine, so no private access is needed.
